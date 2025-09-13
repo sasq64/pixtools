@@ -3,9 +3,11 @@ import hashlib
 import json
 import os
 import time
+from typing import Literal
 import uuid
 from pathlib import Path
 
+FileType = Literal["mp3", "png"]
 
 class FileCache:
     def __init__(
@@ -14,6 +16,7 @@ class FileCache:
         name: str | None = None,
         max_files: int = 100,
         meta: dict[str, str] | None = None,
+        source: str | None = None,
     ):
         self.temporary = False
         if cache_dir is None:
@@ -29,12 +32,18 @@ class FileCache:
         self.meta: dict[str, str] = meta or {}
         self.cache_dir.mkdir(exist_ok=True, parents=True)
 
+        self.source: str | None = source
+
         # Track access times for LRU eviction (using MD5 safe_key as index)
         self._access_times: dict[str, float] = {}
         self._load_existing_files()
 
     def set_meta(self, meta: dict[str, str]):
         self.meta = meta
+
+    def set_source(self, source: str | None):
+        """Current source; ie the game being played"""
+        self.source = source
 
     def _load_existing_files(self):
         """Load existing cache files and their access times."""
@@ -84,7 +93,7 @@ class FileCache:
                 file_path.unlink()
             del self._access_times[oldest_safe_key]
 
-    def add(self, key: str, data: bytes, meta: dict[str, str] | None = None) -> None:
+    def add(self, key: str, data: bytes, type: FileType, meta: dict[str, str] | None = None) -> None:
         """Store bytes data with string key to disk."""
         self._evict_oldest_files()
 
@@ -97,6 +106,8 @@ class FileCache:
         # Create JSON structure with key, data, and creation time
         cache_data = {
             "key": key,
+            "source": self.source,
+            "type": type,
             "data": base64.b64encode(data).decode("utf-8"),
             "created_time": current_time,
         }

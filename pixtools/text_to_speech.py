@@ -25,10 +25,12 @@ class TextToSpeech:
         voice: Voice | None = None,
         model: str = "tts-1",
     ):
+        print("TEXT TO SPEECH")
         print(f"{cache.cache_dir}")
         self.tts_queue: Final = Queue[str]()
         self.audio_player: Final = audio_player
-        self.voice: str = voice
+        assert voice is not None
+        self.voice: Voice = voice
         self.cache: Final = cache
         self.cache.set_meta({"voice": voice, "model": model})
         self.model: str = model
@@ -42,6 +44,7 @@ class TextToSpeech:
         """Queue text for speaking."""
         text = text.strip()
         if self.client and text:
+            print(f"SPEAK:'{text}'")
             self.tts_queue.put(text)
 
     def _tts_worker(self):
@@ -61,7 +64,7 @@ class TextToSpeech:
                             model=self.model, voice=self.voice, input=text
                         )
                         audio_data = response.content
-                        self.cache.add(text, audio_data)
+                        self.cache.add(text, audio_data, "mp3")
                         self.audio_player.put_audio(audio_data)
             except Exception as e:
                 logger.error(f"Error: {e}")
