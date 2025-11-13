@@ -32,7 +32,7 @@ class TextToSpeech:
         assert voice is not None
         self.voice: Voice = voice
         self.cache: Final = cache
-        self.cache.set_meta({"voice": voice, "model": model})
+        self.cache.set_meta({"voice": voice, "model": model, "type": "mp3"})
         self.model: str = model
         self.client: Final = open_ai
 
@@ -64,7 +64,7 @@ class TextToSpeech:
                             model=self.model, voice=self.voice, input=text
                         )
                         audio_data = response.content
-                        self.cache.add(text, audio_data, "mp3")
+                        self.cache.add(text, audio_data)
                         self.audio_player.put_audio(audio_data)
             except Exception as e:
                 logger.error(f"Error: {e}")

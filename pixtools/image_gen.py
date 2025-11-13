@@ -39,6 +39,7 @@ class ImageGen:
             "model": self.model,
             "size": self.size,
             "quality": self.quality,
+            "type": "png",
         }
         self.stop_event: Final = threading.Event()
 

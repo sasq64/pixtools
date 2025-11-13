@@ -3,11 +3,10 @@ import hashlib
 import json
 import os
 import time
-from typing import Literal
 import uuid
 from pathlib import Path
+from typing import Literal
 
-FileType = Literal["mp3", "png"]
 
 class FileCache:
     def __init__(
@@ -93,7 +92,7 @@ class FileCache:
                 file_path.unlink()
             del self._access_times[oldest_safe_key]
 
-    def add(self, key: str, data: bytes, type: FileType, meta: dict[str, str] | None = None) -> None:
+    def add(self, key: str, data: bytes, meta: dict[str, str] | None = None) -> None:
         """Store bytes data with string key to disk."""
         self._evict_oldest_files()
 
@@ -104,19 +103,19 @@ class FileCache:
         current_time = time.time()
 
         # Create JSON structure with key, data, and creation time
-        cache_data = {
+        cache_data : dict[str, float | str | dict[str,str]] = {
             "key": key,
-            "source": self.source,
-            "type": type,
             "data": base64.b64encode(data).decode("utf-8"),
             "created_time": current_time,
         }
+        if self.source is not None:
+            cache_data["source"] = self.source
 
         # Only include meta field if metadata is not empty
         if merged_meta:
             cache_data["meta"] = merged_meta
 
-        file_path.write_text(json.dumps(cache_data))
+        _ = file_path.write_text(json.dumps(cache_data))
         cache_key = self._create_cache_key(key, meta)
         safe_key = hashlib.md5(cache_key.encode()).hexdigest()
         self._access_times[safe_key] = current_time
